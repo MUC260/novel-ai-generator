@@ -1,8 +1,9 @@
-﻿"""Web 图形界面入口：直接运行 python webui.py 打开浏览器使用。"""
+"""Web 图形界面入口：直接运行 python webui.py 打开浏览器使用。"""
 from __future__ import annotations
 import argparse
 import json
 import mimetypes
+import sys
 import threading
 import webbrowser
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -19,6 +20,12 @@ BASE_DIR = Path(__file__).resolve().parent
 PROJECTS_ROOT = BASE_DIR / "projects"
 STATIC_DIR = BASE_DIR / "web"
 PROJECTS_ROOT.mkdir(parents=True, exist_ok=True)
+
+
+def _log(*args: Any) -> None:
+    """隐藏模式（pythonw）下 sys.stdout 为 None，避免打印崩溃。"""
+    if sys.stdout is not None:
+        print(*args)
 
 
 def _json_loads(raw: bytes) -> Dict[str, Any]:
@@ -193,7 +200,7 @@ class Handler(BaseHTTPRequestHandler):
             self._error(500, str(exc))
 
     def log_message(self, format: str, *args) -> None:
-        print(f"[{self.log_date_time_string()}] {format % args}")
+        _log(f"[{self.log_date_time_string()}] {format % args}")
 
 
 def main() -> int:
@@ -204,14 +211,14 @@ def main() -> int:
     args = parser.parse_args()
     server = ThreadingHTTPServer((args.host, args.port), Handler)
     url = f"http://{args.host}:{args.port}"
-    print(f"小说生成器 Web 界面已启动：{url}")
-    print("按 Ctrl+C 停止服务")
+    _log(f"小说生成器 Web 界面已启动：{url}")
+    _log("按 Ctrl+C 停止服务")
     if not args.no_browser:
         threading.Timer(0.8, lambda: webbrowser.open(url)).start()
     try:
         server.serve_forever()
     except KeyboardInterrupt:
-        print("\n已停止")
+        _log("\n已停止")
     finally:
         server.server_close()
     return 0
