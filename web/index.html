@@ -1,0 +1,142 @@
+﻿<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AI 无 AI 味超长连贯小说生成器</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <h1>AI 全自动无 AI 味超长连贯小说生成器</h1>
+      <div class="subtitle">双模式 · 1-15 章连写 · 三档锁字 · 五开关 · 三存档 · 真模型接入</div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section class="statusbar">
+      <span id="healthText">正在检测模型连接...</span>
+      <button class="ghost" id="testBtn" type="button">测试模型</button>
+      <button class="ghost" id="refreshBtn" type="button">刷新工程</button>
+    </section>
+
+    <nav class="tabs">
+      <button class="tab active" data-tab="create">新建工程</button>
+      <button class="tab" data-tab="continue">续写工程</button>
+      <button class="tab" data-tab="projects">工程查看</button>
+    </nav>
+
+    <section id="tab-create" class="panel active">
+      <div class="grid two">
+        <label>小说名称
+          <input id="title" type="text" placeholder="例如：废土拾荒者">
+        </label>
+        <label>创建模式
+          <select id="mode">
+            <option value="auto">全自动脑洞生成</option>
+            <option value="custom">用户自定义精细创作</option>
+          </select>
+        </label>
+        <label>章节数量
+          <select id="chapters"></select>
+        </label>
+        <label>字数档位
+          <select id="tier">
+            <option value="short">日常短章 1200-2000 字</option>
+            <option value="standard" selected>标准连载章 3000-4000 字</option>
+            <option value="long">超长大剧情爆发章 9000-11000 字</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="switches">
+        <label><input type="checkbox" id="anti_ending" checked> 防章节完结</label>
+        <label><input type="checkbox" id="memory_inherit" checked> 全局记忆继承</label>
+        <label><input type="checkbox" id="progression" checked> 五章递进</label>
+        <label><input type="checkbox" id="de_ai" checked> 深度去 AI 文风</label>
+        <label><input type="checkbox" id="autosave" checked> 自动存档更新</label>
+      </div>
+
+      <details id="customBox">
+        <summary>自定义模式字段（留空则 AI 补全）</summary>
+        <div class="grid two custom-grid">
+          <label>题材 <input id="genre" type="text" placeholder="悬疑惊悚"></label>
+          <label>文风 <input id="style" type="text" placeholder="冷峻写实"></label>
+          <label>世界观/时代背景 <input id="world" type="text"></label>
+          <label>世界规则 <input id="rules" type="text"></label>
+          <label>力量体系 <input id="power" type="text"></label>
+          <label>势力分布 <input id="forces" type="text"></label>
+          <label>主角 <input id="protagonist" type="text"></label>
+          <label>配角 <input id="side_characters" type="text"></label>
+          <label>反派 <input id="antagonist" type="text"></label>
+          <label>开局剧情 <input id="opening" type="text"></label>
+          <label>当前矛盾 <input id="conflict" type="text"></label>
+          <label>人物关系 <input id="relations" type="text"></label>
+          <label>剧情走向 <input id="direction" type="text"></label>
+          <label>禁忌内容 <input id="taboos" type="text"></label>
+          <label>爽点/虐点偏好 <input id="preferences" type="text"></label>
+        </div>
+      </details>
+
+      <button class="primary wide" id="createBtn" type="button">开始生成</button>
+    </section>
+
+    <section id="tab-continue" class="panel">
+      <div class="grid two">
+        <label>选择工程
+          <select id="continueProject"></select>
+        </label>
+        <label>字数档位
+          <select id="continueTier">
+            <option value="short">日常短章 1200-2000 字</option>
+            <option value="standard" selected>标准连载章 3000-4000 字</option>
+            <option value="long">超长大剧情爆发章 9000-11000 字</option>
+          </select>
+        </label>
+        <label>续写章数
+          <select id="continueChapters"></select>
+        </label>
+      </div>
+      <div class="switches">
+        <label><input type="checkbox" id="cont_anti_ending" checked> 防章节完结</label>
+        <label><input type="checkbox" id="cont_memory_inherit" checked> 全局记忆继承</label>
+        <label><input type="checkbox" id="cont_progression" checked> 五章递进</label>
+        <label><input type="checkbox" id="cont_de_ai" checked> 深度去 AI 文风</label>
+        <label><input type="checkbox" id="cont_autosave" checked> 自动存档更新</label>
+      </div>
+      <button class="primary wide" id="continueBtn" type="button">开始续写</button>
+    </section>
+
+    <section id="tab-projects" class="panel">
+      <div class="projects-toolbar">
+        <strong>已有工程</strong>
+        <span id="projectCount"></span>
+      </div>
+      <div id="projectList" class="project-list"></div>
+      <div id="projectDetail" class="detail"></div>
+    </section>
+
+    <section id="resultSection" class="result hidden">
+      <div class="result-head">
+        <h2>生成结果</h2>
+        <button class="ghost" id="closeResult" type="button">关闭</button>
+      </div>
+      <div id="resultMeta"></div>
+      <div id="resultChapters"></div>
+    </section>
+  </main>
+
+  <div id="chapterModal" class="modal hidden">
+    <div class="modal-box">
+      <div class="modal-head">
+        <strong id="modalTitle"></strong>
+        <button class="ghost" id="closeModal" type="button">关闭</button>
+      </div>
+      <pre id="modalBody"></pre>
+    </div>
+  </div>
+
+  <script src="/app.js"></script>
+</body>
+</html>

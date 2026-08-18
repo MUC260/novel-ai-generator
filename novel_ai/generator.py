@@ -9,7 +9,7 @@ from .config import NovelConfig, WORD_TIERS
 from .filters import purify, has_ending
 from .llm import LLMProvider
 from .local_engine import LocalEngine
-from .prompts import WRITE_BASE_PROMPT, DEEP_RULES_PROMPT, chapter_user_prompt
+from .prompts import WRITE_BASE_PROMPT, DE_AI_RULES_PROMPT, ANTI_ENDING_PROMPT, PROGRESSION_PROMPT, chapter_user_prompt
 from .storage import ProjectStore
 from .wordcount import normalize, need_expansion
 
@@ -31,7 +31,11 @@ def _make_messages(
     low, high = WORD_TIERS[tier]
     system = WRITE_BASE_PROMPT
     if cfg.de_ai:
-        system += "\n\n" + DEEP_RULES_PROMPT
+        system += "\n\n" + DE_AI_RULES_PROMPT
+    if cfg.anti_ending:
+        system += "\n\n" + ANTI_ENDING_PROMPT
+    if cfg.progression and total > 1:
+        system += "\n\n" + PROGRESSION_PROMPT
     user = chapter_user_prompt(
         cfg.title,
         chapter_no,
@@ -153,12 +157,12 @@ def generate_chapters(
     chapters: int,
     tier: str,
 ) -> List[Dict[str, Any]]:
-    world = store.read("world.json")
-    chars = store.read("char.json")
-    plot = store.read("plot.json")
+    world = store.read("world.json") if cfg.memory_inherit else {}
+    chars = store.read("char.json") if cfg.memory_inherit else {}
+    plot = store.read("plot.json") if cfg.memory_inherit else {}
     results: List[Dict[str, Any]] = []
     for i in range(1, chapters + 1):
-        tail = store.last_tail(500)
+        tail = store.last_tail(500) if cfg.memory_inherit else ""
         text = _generate_one(cfg, i, chapters, tier, world, chars, plot, tail)
         # 精准字数兜底校验
         low, high = WORD_TIERS[tier]

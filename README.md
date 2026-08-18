@@ -11,6 +11,7 @@
 - 全局永久记忆存档：world.json / char.json / plot.json
 - 深度去 AI 文风体系、真人网文节奏模板、全场景剧情素材库
 - 强制连载不结尾机制、多层级防割裂续写机制
+- 本地 Web 图形界面，打开浏览器即可使用
 
 ## 安装
 ```bash
@@ -20,9 +21,55 @@ python -m venv .venv
 pip install -r requirements.txt
 ```
 
-本项目默认不依赖任何第三方库。接入真实大模型时，可选择任一 OpenAI 兼容接口。
+本项目核心逻辑默认仅使用 Python 标准库。接入真实大模型时，`requests` 为可选依赖；不安装 `requests` 也会自动回退到标准库 `urllib`。
 
-## 使用
+## Web 图形界面（推荐）
+直接运行：
+```bash
+python webui.py
+```
+启动后会自动打开浏览器，默认地址：
+```
+http://127.0.0.1:8000
+```
+
+也可以手动指定端口，或不自动打开浏览器：
+```bash
+python webui.py --port 8000
+python webui.py --no-browser --port 8000
+```
+
+Web 界面提供：
+- 新建工程 / 续写工程 / 工程查看三个页面
+- 1-15 章批量连写、三档字数选择
+- 五大开关可视控制
+- 一键测试模型连接
+- 查看/复制每一章正文
+- 查看三份 JSON 存档
+
+## 大模型接入
+在项目根目录新建 `.env`（不要提交到 Git）：
+```env
+NOVEL_BASE_URL=https://matchfit.top/v1
+NOVEL_API_KEY=你的密钥
+NOVEL_MODEL=deepseek-v4-flash
+NOVEL_TIMEOUT=600
+NOVEL_MAX_RETRIES=3
+```
+
+| 环境变量 | 说明 | 默认值 |
+| --- | --- | --- |
+| `NOVEL_API_KEY` | OpenAI 兼容接口密钥 | 空 |
+| `NOVEL_BASE_URL` | 接口地址，需以 `/v1` 结尾 | `https://api.openai.com/v1` |
+| `NOVEL_MODEL` | 模型名 | `gpt-4o-mini` |
+| `NOVEL_TIMEOUT` | 请求超时秒数 | `600` |
+| `NOVEL_MAX_RETRIES` | 失败自动重试次数 | `3` |
+
+> 模型名注意：当前账号使用非 Pro 的 `V4 Flash` 模型，接口模型名为 `deepseek-v4-flash`。可先用 `GET /v1/models` 确认可用模型名。
+
+未配置密钥、或密钥为 `off/false/none/disabled` 时，自动使用内置离线演示引擎，用于流程验证、存档验证与字数验证。正式百万字创作请接入真实大模型。
+
+## CLI 使用
 ### 交互式
 ```bash
 python main.py
@@ -50,28 +97,29 @@ python main.py inspect --project "废土拾荒者"
 ```
 
 ### 运行测试
+离线测试不会调用真实大模型：
 ```bash
+$env:NOVEL_API_KEY="off"
 python -m unittest discover -s tests -v
 ```
-
-## 大模型接入
-| 环境变量 | 说明 | 默认值 |
-| --- | --- | --- |
-| `NOVEL_API_KEY` | OpenAI 兼容接口密钥 | 空 |
-| `NOVEL_BASE_URL` | 接口地址，需以 `/v1` 结尾 | `https://api.openai.com/v1` |
-| `NOVEL_MODEL` | 模型名 | `gpt-4o-mini` |
-| `NOVEL_TIMEOUT` | 请求超时秒数 | `120` |
-
-未配置密钥时自动使用内置离线演示引擎，用于流程验证、存档验证与字数验证。正式百万字创作请接入真实大模型。
+Linux/macOS：
+```bash
+NOVEL_API_KEY=off python -m unittest discover -s tests -v
+```
 
 ## 项目结构
 ```
 main.py                   CLI 入口
+webui.py                  Web 图形界面入口
+web/
+  index.html              界面结构
+  style.css               界面样式
+  app.js                  前端逻辑
 novel_ai/
   config.py               全部可选参数与默认开关
   storage.py              三份永久本地存档
   prompts.py              完整 Prompt 体系
-  llm.py                  OpenAI 兼容接口
+  llm.py                  OpenAI 兼容接口（重试、容错）
   local_engine.py         离线演示引擎
   project_manager.py      新建/载入/补全工程
   filters.py              去 AI 套话与结尾检测
