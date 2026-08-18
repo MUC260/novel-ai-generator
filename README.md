@@ -39,6 +39,14 @@ python webui.py --port 8000
 python webui.py --no-browser --port 8000
 ```
 
+### 一键启动（Windows 推荐）
+项目根目录已内置 `start.bat`，双击即可：
+1. 自动检测 Python（优先使用 `.venv`，其次系统 Python）
+2. 缺少依赖时自动安装
+3. 启动本地服务并自动打开浏览器
+
+默认地址：`http://127.0.0.1:8000`
+
 Web 界面提供：
 - 新建工程 / 续写工程 / 工程查看三个页面
 - 1-15 章批量连写、三档字数选择
