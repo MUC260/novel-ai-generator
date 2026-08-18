@@ -8,3 +8,6 @@ projects/
 
 .env
 
+
+# 交接文档(内部使用, 不上传)
+HANDOVER.md
