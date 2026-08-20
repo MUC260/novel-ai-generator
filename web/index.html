@@ -3,140 +3,453 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>AI 无 AI 味超长连贯小说生成器</title>
-  <link rel="stylesheet" href="/style.css">
+  <title>AI 小说生成器</title>
+  <link rel="stylesheet" href="/style.css?v=6.0.0">
+  <link rel="stylesheet" href="/reader.css?v=6.0.0">
+
+<script>
+// Safety: ensure reader overlay is hidden on page load, even with bfcache/restore
+window.addEventListener("pageshow", function(evt) {
+  // Always hide reader overlay on page load
+  var rv = document.getElementById("readerView");
+  if (rv) rv.classList.add("hidden");
+  // Only reset panels on bfcache restore (not on initial load)
+  if (evt.persisted) {
+    document.querySelectorAll(".panel").forEach(function(p) { p.classList.remove("active"); p.classList.add("hidden"); });
+    var firstPanel = document.querySelector(".panel");
+    if (firstPanel) { firstPanel.classList.remove("hidden"); firstPanel.classList.add("active"); }
+    document.querySelectorAll(".nav-item").forEach(function(n) { n.classList.remove("active"); });
+    var firstNav = document.querySelector(".nav-item");
+    if (firstNav) { firstNav.classList.add("active"); }
+  }
+});
+</script>
+
+<script>
+// DOMContentLoaded: ensure readerView hidden and tab-create shown
+document.addEventListener("DOMContentLoaded", function() {
+  var rv = document.getElementById("readerView");
+  if (rv) rv.classList.add("hidden");
+  var createTab = document.getElementById("tab-create");
+  if (createTab) {
+    document.querySelectorAll(".panel").forEach(function(p) { p.classList.remove("active"); p.classList.add("hidden"); });
+    createTab.classList.remove("hidden");
+    createTab.classList.add("active");
+  }
+  document.querySelectorAll(".nav-item").forEach(function(n) { n.classList.remove("active"); });
+  var firstNav = document.querySelector(".nav-item");
+  if (firstNav) firstNav.classList.add("active");
+});
+</script>
 </head>
 <body>
   <header>
-    <div class="wrap">
-      <h1>AI 全自动无 AI 味超长连贯小说生成器</h1>
-      <div class="subtitle">双模式 · 1-15 章连写 · 三档锁字 · 五开关 · 三存档 · 真模型接入</div>
+    <div class="header-inner">
+      <h1>📖 AI 小说生成器</h1>
+      <span class="header-badge">v6.0.0</span>
+      <div class="header-spacer"></div>
+      <select id="headerModelSelect" class="model-switcher" title="快捷切换模型">
+        <option value="">模型</option>
+      </select>
+      <button class="btn btn-ghost header-settings-btn" id="settingsBtn" title="设置">⚙️ 设置</button>
     </div>
   </header>
 
-  <main class="wrap">
-    <section class="statusbar">
-      <span id="healthText">正在检测模型连接...</span>
-      <button class="ghost" id="testBtn" type="button">测试模型</button>
-      <button class="ghost" id="refreshBtn" type="button">刷新工程</button>
-    </section>
-
-    <nav class="tabs">
-      <button class="tab active" data-tab="create">新建工程</button>
-      <button class="tab" data-tab="continue">续写工程</button>
-      <button class="tab" data-tab="projects">工程查看</button>
-    </nav>
-
-    <section id="tab-create" class="panel active">
-      <div class="grid two">
-        <label>小说名称
-          <input id="title" type="text" placeholder="例如：废土拾荒者">
-        </label>
-        <label>创建模式
-          <select id="mode">
-            <option value="auto">全自动脑洞生成</option>
-            <option value="custom">用户自定义精细创作</option>
-          </select>
-        </label>
-        <label>章节数量
-          <select id="chapters"></select>
-        </label>
-        <label>字数档位
-          <select id="tier">
-            <option value="short">日常短章 1200-2000 字</option>
-            <option value="standard" selected>标准连载章 3000-4000 字</option>
-            <option value="long">超长大剧情爆发章 9000-11000 字</option>
-          </select>
-        </label>
-      </div>
-
-      <div class="switches">
-        <label><input type="checkbox" id="anti_ending" checked> 防章节完结</label>
-        <label><input type="checkbox" id="memory_inherit" checked> 全局记忆继承</label>
-        <label><input type="checkbox" id="progression" checked> 五章递进</label>
-        <label><input type="checkbox" id="de_ai" checked> 深度去 AI 文风</label>
-        <label><input type="checkbox" id="autosave" checked> 自动存档更新</label>
-      </div>
-
-      <details id="customBox">
-        <summary>自定义模式字段（留空则 AI 补全）</summary>
-        <div class="grid two custom-grid">
-          <label>题材 <input id="genre" type="text" placeholder="悬疑惊悚"></label>
-          <label>文风 <input id="style" type="text" placeholder="冷峻写实"></label>
-          <label>世界观/时代背景 <input id="world" type="text"></label>
-          <label>世界规则 <input id="rules" type="text"></label>
-          <label>力量体系 <input id="power" type="text"></label>
-          <label>势力分布 <input id="forces" type="text"></label>
-          <label>主角 <input id="protagonist" type="text"></label>
-          <label>配角 <input id="side_characters" type="text"></label>
-          <label>反派 <input id="antagonist" type="text"></label>
-          <label>开局剧情 <input id="opening" type="text"></label>
-          <label>当前矛盾 <input id="conflict" type="text"></label>
-          <label>人物关系 <input id="relations" type="text"></label>
-          <label>剧情走向 <input id="direction" type="text"></label>
-          <label>禁忌内容 <input id="taboos" type="text"></label>
-          <label>爽点/虐点偏好 <input id="preferences" type="text"></label>
-        </div>
-      </details>
-
-      <button class="primary wide" id="createBtn" type="button">开始生成</button>
-    </section>
-
-    <section id="tab-continue" class="panel">
-      <div class="grid two">
-        <label>选择工程
-          <select id="continueProject"></select>
-        </label>
-        <label>字数档位
-          <select id="continueTier">
-            <option value="short">日常短章 1200-2000 字</option>
-            <option value="standard" selected>标准连载章 3000-4000 字</option>
-            <option value="long">超长大剧情爆发章 9000-11000 字</option>
-          </select>
-        </label>
-        <label>续写章数
-          <select id="continueChapters"></select>
-        </label>
-      </div>
-      <div class="switches">
-        <label><input type="checkbox" id="cont_anti_ending" checked> 防章节完结</label>
-        <label><input type="checkbox" id="cont_memory_inherit" checked> 全局记忆继承</label>
-        <label><input type="checkbox" id="cont_progression" checked> 五章递进</label>
-        <label><input type="checkbox" id="cont_de_ai" checked> 深度去 AI 文风</label>
-        <label><input type="checkbox" id="cont_autosave" checked> 自动存档更新</label>
-      </div>
-      <button class="primary wide" id="continueBtn" type="button">开始续写</button>
-    </section>
-
-    <section id="tab-projects" class="panel">
-      <div class="projects-toolbar">
-        <strong>已有工程</strong>
-        <span id="projectCount"></span>
-      </div>
-      <div id="projectList" class="project-list"></div>
-      <div id="projectDetail" class="detail"></div>
-    </section>
-
-    <section id="resultSection" class="result hidden">
-      <div class="result-head">
-        <h2>生成结果</h2>
-        <button class="ghost" id="closeResult" type="button">关闭</button>
-      </div>
-      <div id="resultMeta"></div>
-      <div id="resultChapters"></div>
-    </section>
-  </main>
-
-  <div id="chapterModal" class="modal hidden">
-    <div class="modal-box">
-      <div class="modal-head">
-        <strong id="modalTitle"></strong>
-        <button class="ghost" id="closeModal" type="button">关闭</button>
-      </div>
-      <pre id="modalBody"></pre>
+  <div class="status-bar">
+    <div class="status-left" id="statusLeft">
+      <span class="status-dot" id="statusDot"></span>
+      <span id="statusText">正在检测模型连接...</span>
+    </div>
+    <div class="status-right">
+      <button class="btn btn-sm" id="testBtn">🧪 测试模型</button>
+      <button class="btn btn-sm" id="refreshBtn">🔄 刷新</button>
     </div>
   </div>
 
-  <script src="/app.js"></script>
+  <div class="app-container">
+    <nav class="side-nav">
+      <button class="nav-item active" data-tab="create">
+        <span class="nav-icon">✏️</span><span>新建工程</span>
+      </button>
+      <button class="nav-item" data-tab="continue">
+        <span class="nav-icon">📝</span><span>续写工程</span>
+      </button>
+      <button class="nav-item" data-tab="projects">
+        <span class="nav-icon">📚</span><span>工程查看</span>
+      </button>
+    </nav>
+
+    <main class="main-content">
+      <!-- ====== 新建工程 ====== -->
+      <section id="tab-create" class="panel active">
+        <!-- 第一步：填表 -->
+        <div id="createStep1">
+          <h2 class="panel-title">✏️ 新建工程 — 填写设定</h2>
+          <div class="form-row">
+            <div class="form-group flex-1">
+              <label>小说名称</label>
+              <input id="title" type="text" placeholder="例如：废土拾荒者" autocomplete="off">
+            </div>
+            <div class="form-group">
+              <label>创建模式</label>
+              <select id="mode">
+                <option value="auto">全自动脑洞生成</option>
+                <option value="custom">自定义精细创作</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group flex-1">
+              <label>主角姓名（强烈建议填写）</label>
+              <input id="protagonist" type="text" placeholder="例如：司、林晚、陈棠（AI 将严格使用此姓名）" autocomplete="off">
+              <span class="field-hint">填写后 AI 会在全书所有章节严格使用此姓名，一字不差。留空则由 AI 按世界观自动起名。</span>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group flex-1">
+              <label>世界观 / 详细设定（强烈建议填写）</label>
+              <textarea id="worldview" rows="3" placeholder="描述你的世界观与主角设定，越详细越好。&#10;&#10;例如：仙魔大战千年后的人间，灵气枯竭，幸存者靠翻捡上古遗物续命。主角叫司，是上古宗门的末代弟子，宗门覆灭后流落人间，靠给人修复法器为生。" autocomplete="off"></textarea>
+              <span class="field-hint">填写后 AI 会严格以此为世界基调与人物逻辑，不会跑偏。可写时代背景、社会结构、力量体系、主角来历、当前冲突等。</span>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>章节数量</label>
+              <select id="chapters"></select>
+            </div>
+            <div class="form-group">
+              <label>字数档位</label>
+              <select id="tier">
+                <option value="short">短章 1200-2000 字</option>
+                <option value="standard" selected>标准章 3000-4000 字</option>
+                <option value="long">长章 9000-11000 字</option>
+              </select>
+            </div>
+          </div>
+          <div class="switch-row">
+            <label class="switch-item">
+              <input type="checkbox" id="anti_ending" checked>
+              <span class="switch-track"><span class="switch-knob"></span></span>
+              <span class="switch-label">防章节完结</span>
+            </label>
+            <label class="switch-item">
+              <input type="checkbox" id="memory_inherit" checked>
+              <span class="switch-track"><span class="switch-knob"></span></span>
+              <span class="switch-label">全局记忆继承</span>
+            </label>
+            <label class="switch-item">
+              <input type="checkbox" id="progression" checked>
+              <span class="switch-track"><span class="switch-knob"></span></span>
+              <span class="switch-label">递进节奏</span>
+            </label>
+            <label class="switch-item">
+              <input type="checkbox" id="de_ai" checked>
+              <span class="switch-track"><span class="switch-knob"></span></span>
+              <span class="switch-label">去 AI 味</span>
+            </label>
+            <label class="switch-item">
+              <input type="checkbox" id="autosave" checked disabled>
+              <span class="switch-track"><span class="switch-knob"></span></span>
+              <span class="switch-label">自动存档</span>
+            </label>
+          </div>
+          <div class="form-actions">
+            <button class="btn btn-primary" id="createStep1Next">生成世界档案 →</button>
+          </div>
+        </div>
+
+        <!-- 第二步：档案预览 -->
+        <div id="createStep2" class="hidden">
+          <h2 class="panel-title">📂 档案预览 — 审查并编辑三份档案</h2>
+          <div class="step-actions">
+            <button class="btn btn-sm" id="step2Back">← 返回修改</button>
+            <button class="btn btn-primary" id="step2Next">生成大纲 →</button>
+          </div>
+          <div id="archivePreview" class="archive-preview"></div>
+        </div>
+
+        <!-- 大纲步骤（第2.5步） -->
+        <div id="createStepOutline" class="hidden">
+          <h2 class="panel-title">📋 大纲预览 — 审查章节大纲</h2>
+          <p class="step-hint">AI 已根据世界观和人物档案生成章节大纲。请仔细审查，可编辑下方内容或点击重新生成。</p>
+          <div class="step-actions">
+            <button class="btn btn-primary" id="outlineRegenBtn">🔄 重新生成大纲</button>
+            <button class="btn btn-success" id="outlineConfirmBtn">✅ 确认大纲，开始生成正文</button>
+            <button class="btn btn-ghost" id="outlineBackBtn">← 返回档案编辑</button>
+          </div>
+          <div id="outlineLoading" class="hidden outline-loading">
+            <div class="spinner"></div>
+            <span>AI 正在生成大纲...</span>
+          </div>
+          <div id="outlineContainer" class="hidden"></div>
+        </div>
+
+        <!-- 第三步：生成 -->
+        <div id="createStep3" class="hidden">
+          <h2 class="panel-title">⚡ 正在生成</h2>
+          <div class="progress-container">
+            <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+            <div class="progress-text" id="progressText">准备中...</div>
+          </div>
+          <div id="chapterStatus" class="chapter-tags"></div>
+          <div id="progressLog" class="gen-log-body"></div>
+        </div>
+
+        <!-- 第四步：结果 -->
+        <div id="createStep4" class="hidden">
+          <h2 class="panel-title">✅ 生成完成</h2>
+          <div id="resultActions" class="result-nav">
+            <button class="btn btn-primary" id="newProjectBtn">✏️ 新建另一个</button>
+            <button class="btn btn-success" id="downloadAllBtn">⬇️ 下载全文</button>
+            <button class="btn" id="copyAllBtn">📋 复制全部</button>
+            <button class="btn" id="readerBtn">📖 沉浸式阅读</button>
+          </div>
+          <div id="resultChapters" class="result-chapters"></div>
+          <div id="createDoneResult" class="hidden"></div>
+        </div>
+      </section>
+
+      <!-- ====== 续写工程 ====== -->
+      <section id="tab-continue" class="panel hidden">
+        <h2 class="panel-title">📝 续写工程</h2>
+        <div class="form-row">
+          <div class="form-group flex-1">
+            <label>选择工程</label>
+            <select id="continueProject"><option value="">请选择工程</option></select>
+          </div>
+          <div class="form-group">
+            <label>续写章节数</label>
+            <select id="continueChapters"></select>
+          </div>
+          <div class="form-group">
+            <label>字数档位</label>
+            <select id="continueTier">
+              <option value="short">短章 1200-2000 字</option>
+              <option value="standard" selected>标准章 3000-4000 字</option>
+              <option value="long">长章 9000-11000 字</option>
+            </select>
+          </div>
+        </div>
+        <div class="switch-row">
+          <label class="switch-item">
+            <input type="checkbox" id="continue_anti_ending" checked>
+            <span class="switch-track"><span class="switch-knob"></span></span>
+            <span class="switch-label">防章节完结</span>
+          </label>
+          <label class="switch-item">
+            <input type="checkbox" id="continue_memory_inherit" checked>
+            <span class="switch-track"><span class="switch-knob"></span></span>
+            <span class="switch-label">全局记忆继承</span>
+          </label>
+          <label class="switch-item">
+            <input type="checkbox" id="continue_progression" checked>
+            <span class="switch-track"><span class="switch-knob"></span></span>
+            <span class="switch-label">递进节奏</span>
+          </label>
+          <label class="switch-item">
+            <input type="checkbox" id="continue_de_ai" checked>
+            <span class="switch-track"><span class="switch-knob"></span></span>
+            <span class="switch-label">去 AI 味</span>
+          </label>
+        </div>
+        <div class="form-actions">
+          <button class="btn btn-primary" id="continueBtn">开始续写</button>
+        </div>
+        <div id="continueProgress" class="hidden progress-container" style="margin-top:18px;">
+          <div class="progress-bar"><div class="progress-fill" id="continueProgressFill" style="width:0%"></div></div>
+          <div class="progress-text">
+            <span id="continueProgressLabel">准备中...</span>
+            <span id="continueProgressCount">0 / 0</span>
+          </div>
+          <div id="continueGenMessage" style="color:var(--muted);font-size:13px;margin-top:4px;">正在初始化...</div>
+          <div id="continueChapterProgressList" class="chapter-tags" style="margin-top:12px;"></div>
+          <div id="continueLog" class="gen-log-body" style="margin-top:10px;max-height:160px;"></div>
+        </div>
+        <div id="continueResult" class="hidden" style="margin-top:20px;"></div>
+      </section>
+
+      <!-- ====== 工程查看 ====== -->
+      <section id="tab-projects" class="panel hidden">
+        <h2 class="panel-title">📚 工程查看</h2>
+        <div id="projectCount" class="toolbar-hint">加载中...</div>
+        <div id="projectList" class="project-list"></div>
+        <div id="projectDetail"></div>
+      </section>
+    </main>
+  </div>
+
+  <!-- 确认对话框 -->
+  <div id="confirmModal" class="modal-overlay hidden">
+    <div class="modal-box confirm-box">
+      <div class="modal-header">
+        <span class="modal-title" id="confirmTitle">确认操作</span>
+        <button class="btn btn-ghost modal-close" id="closeConfirm">✕</button>
+      </div>
+      <div class="modal-body">
+        <p id="confirmMessage"></p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn" id="confirmCancelBtn">取消</button>
+        <button class="btn btn-danger" id="confirmOkBtn">确认删除</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 重命名对话框 -->
+  <div id="renameModal" class="modal-overlay hidden">
+    <div class="modal-box confirm-box">
+      <div class="modal-header">
+        <span class="modal-title">重命名工程</span>
+        <button class="btn btn-ghost modal-close" id="closeRename">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>新名称</label>
+          <input id="renameInput" type="text" placeholder="输入新工程名称">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn" id="renameCancelBtn">取消</button>
+        <button class="btn btn-primary" id="renameOkBtn">确认重命名</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 修订对话框 -->
+  <div id="reviseModal" class="modal-overlay hidden">
+    <div class="modal-box">
+      <div class="modal-header">
+        <span class="modal-title">📝 修订章节</span>
+        <button class="btn btn-ghost modal-close" id="closeRevise">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>修改意见</label>
+          <textarea id="reviseInstructions" rows="4" placeholder="例如：把主角的性格改得更冷酷一些，增加环境描写，减少对话。"></textarea>
+        </div>
+        <div class="form-actions">
+          <button class="btn" id="reviseCancelBtn">取消</button>
+          <button class="btn btn-primary" id="reviseOkBtn">确认修订</button>
+        </div>
+        <div id="reviseResult" class="hidden revise-compare">
+          <div id="reviseOriginal" style="margin-bottom:14px;">
+            <label>原章节（前500字）</label>
+            <pre id="reviseOriginalText"></pre>
+          </div>
+          <div id="reviseNew">
+            <label>修订后（前500字）</label>
+            <pre id="reviseNewText"></pre>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 设置对话框 -->
+  <div id="settingsModal" class="modal-overlay hidden">
+    <div class="modal-box settings-box">
+      <div class="modal-header">
+        <span class="modal-title">⚙️ 设置</span>
+        <button class="btn btn-ghost modal-close" id="closeSettings">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="settings-source" id="settingsSourceText">密钥来源：—</div>
+        <div class="form-group">
+          <label>Base URL</label>
+          <input id="settingsBaseUrl" type="text" placeholder="https://api.openai.com/v1" autocomplete="off">
+        </div>
+        <div class="form-group">
+          <label>API Key</label>
+          <div class="key-input-row">
+            <input id="settingsApiKey" type="password" placeholder="未配置则使用离线模式" autocomplete="off">
+            <button class="key-toggle" id="settingsKeyToggle" type="button" title="显示/隐藏密钥">👁</button>
+          </div>
+          <span class="field-hint" id="settingsKeyStatus"></span>
+        </div>
+        <div class="form-group">
+          <label>模型</label>
+          <select id="settingsModelSelect"></select>
+          <div id="settingsCustomWrap" class="hidden" style="margin-top:8px;">
+            <input id="settingsCustomModel" type="text" placeholder="输入自定义模型名，例如 gpt-4o-mini" autocomplete="off">
+          </div>
+        </div>
+        <div class="settings-test-result" id="settingsTestResult"></div>
+        <div class="settings-actions">
+          <button class="btn" id="settingsTestBtn">🧪 测试连接</button>
+          <button class="btn btn-primary" id="settingsSaveBtn">💾 保存</button>
+          <button class="btn btn-ghost" id="settingsResetBtn">恢复默认(.env)</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 章节预览对话框 -->
+  <div id="chapterPreview" class="modal-overlay hidden"></div>
+
+  <!-- 沉浸式阅读器 -->
+  <div id="readerView" class="reader-overlay hidden">
+    <div class="reader-topbar">
+      <button class="reader-back btn btn-ghost" id="readerBack">← 返回</button>
+      <div class="reader-title" id="readerTitle">小说</div>
+      <div class="reader-top-actions">
+        <button class="btn btn-sm" id="readerDownload">⬇️ 下载全文</button>
+        <button class="btn btn-sm" id="readerCopyAll">📋 复制全部</button>
+      </div>
+    </div>
+    <div class="reader-body">
+      <aside class="reader-toc" id="readerToc">
+        <div class="reader-toc-title">📚 目录</div>
+        <div class="reader-toc-list" id="readerTocList"></div>
+      </aside>
+      <div class="reader-content-wrap" id="readerContentWrap">
+        <div class="reader-content" id="readerContent">
+          <div class="reader-book-header" id="readerBookHeader"></div>
+          <div class="reader-chapter-title" id="readerChapterTitle"></div>
+          <div class="reader-chapter-body" id="readerChapterBody">
+            <p class="reader-loading">加载中...</p>
+          </div>
+        </div>
+      </div>
+      <aside class="reader-settings">
+        <div class="settings-group">
+          <label class="settings-label">字号</label>
+          <div class="settings-row">
+            <button class="btn btn-sm font-btn" id="fontMinus" title="减小字号">A-</button>
+            <button class="btn btn-sm font-btn" id="fontPlus" title="增大字号">A+</button>
+            <span class="font-size-display" id="fontSizeDisplay">17</span>
+          </div>
+        </div>
+        <div class="settings-group">
+          <label class="settings-label">主题</label>
+          <div class="settings-row theme-row">
+            <button class="theme-dot" data-theme="light" title="白色" style="background:#fff;"></button>
+            <button class="theme-dot" data-theme="sepia" title="羊皮纸" style="background:#f5e9d7;"></button>
+            <button class="theme-dot active" data-theme="dark" title="夜间" style="background:#1a1a1a;"></button>
+            <button class="theme-dot" data-theme="green" title="护眼绿" style="background:#cce8cf;"></button>
+          </div>
+        </div>
+        <div class="settings-group">
+          <label class="settings-label">进度</label>
+          <div class="reader-progress" id="readerProgress">0/0</div>
+          <div class="reader-progress-bar">
+            <div class="reader-progress-fill" id="readerProgressFill"></div>
+          </div>
+        </div>
+        <div class="settings-group">
+          <label class="settings-label">操作</label>
+          <div class="settings-row settings-vertical">
+            <button class="btn btn-sm" id="readerPrev">⬅ 上一章</button>
+            <button class="btn btn-sm" id="readerNext">下一章 ➡</button>
+          </div>
+        </div>
+      </aside>
+    </div>
+    <textarea id="readerFullText" style="position:fixed;left:-9999px;top:0;" readonly></textarea>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast" class="toast hidden"><span id="toastText"></span></div>
+
+  <script src="/app.js?v=6.0.0"></script>
 </body>
 </html>

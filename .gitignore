@@ -11,3 +11,11 @@ projects/
 
 # 交接文档(内部使用, 不上传)
 HANDOVER.md
+
+server.pid
+
+runtime_settings.json
+
+.pytest_cache/
+server.log
+server.err.log

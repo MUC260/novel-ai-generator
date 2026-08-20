@@ -12,6 +12,20 @@
 - 深度去 AI 文风体系、真人网文节奏模板、全场景剧情素材库
 - 强制连载不结尾机制、多层级防割裂续写机制
 - 本地 Web 图形界面，打开浏览器即可使用
+- 界面内一键切换模型、一键接入密钥
+
+## 私密版 vs 公开版
+
+本项目同一份代码同时支持两种用法：
+
+| | 私密版（自用） | 公开版（开源分发） |
+| --- | --- | --- |
+| 密钥来源 | 项目根 `.env` 里写死自己的密钥 | 不携带任何密钥，用户自行接入 |
+| 使用方式 | 启动即用 | 打开 Web 界面 → 右上角「设置」填 Base URL / API Key / 模型，即填即用 |
+| 密钥是否入库 | 否（`.env` 已被 `.gitignore` 忽略） | 否（运行时写入 `runtime_settings.json`，同样被忽略） |
+
+- 想开源发布：直接推送代码即可，`.env` / `runtime_settings.json` / `projects/` 都不会被提交。
+- 想自己私用：在 `.env` 里填好密钥即可，界面里的「设置」仍可临时切换模型/密钥覆盖 `.env`。
 
 ## 安装
 ```bash
@@ -57,13 +71,24 @@ Web 界面提供：
 - 一键测试模型连接
 - 查看/复制每一章正文
 - 查看三份 JSON 存档
+- 右上角「设置」：快速接入密钥、切换模型
 
-## 大模型接入
-在项目根目录新建 `.env`（不要提交到 Git）：
+## 大模型接入（两种方式任选）
+
+### 方式一：界面内接入（最简单，公开版推荐）
+启动 Web 界面后，点右上角 **⚙️ 设置**，在弹窗中填写：
+- **Base URL**：OpenAI 兼容接口地址（需以 `/v1` 结尾，例如 `https://api.openai.com/v1`）
+- **API Key**：你自己的密钥
+- **模型**：下拉选择已探测到的模型，或点「✏️ 自定义模型」手动输入
+
+保存后即时生效，顶部状态栏会显示当前模型与密钥状态。可随时点顶部模型下拉框快速切换模型。
+
+### 方式二：.env 文件（私密版/自用推荐）
+复制 `.env.example` 为 `.env`（不要提交到 Git）：
 ```env
-NOVEL_BASE_URL=https://matchfit.top/v1
+NOVEL_BASE_URL=https://api.openai.com/v1
 NOVEL_API_KEY=你的密钥
-NOVEL_MODEL=deepseek-v4-flash
+NOVEL_MODEL=gpt-4o-mini
 NOVEL_TIMEOUT=600
 NOVEL_MAX_RETRIES=3
 ```
@@ -76,7 +101,7 @@ NOVEL_MAX_RETRIES=3
 | `NOVEL_TIMEOUT` | 请求超时秒数 | `600` |
 | `NOVEL_MAX_RETRIES` | 失败自动重试次数 | `3` |
 
-> 模型名注意：当前账号使用非 Pro 的 `V4 Flash` 模型，接口模型名为 `deepseek-v4-flash`。可先用 `GET /v1/models` 确认可用模型名。
+> 模型名以实际接口返回为准，可用 `GET {BASE_URL}/models` 查询。界面里的「设置」也会自动探测可用模型列表。
 
 未配置密钥、或密钥为 `off/false/none/disabled` 时，自动使用内置离线演示引擎，用于流程验证、存档验证与字数验证。正式百万字创作请接入真实大模型。
 
@@ -125,12 +150,14 @@ webui.py                  Web 图形界面入口
 web/
   index.html              界面结构
   style.css               界面样式
+  reader.css              沉浸式阅读器样式
   app.js                  前端逻辑
 novel_ai/
   config.py               全部可选参数与默认开关
   storage.py              三份永久本地存档
   prompts.py              完整 Prompt 体系
-  llm.py                  OpenAI 兼容接口（重试、容错）
+  llm.py                  OpenAI 兼容接口（重试、容错、模型列表）
+  settings.py             运行时密钥/模型设置（界面内切换）
   local_engine.py         离线演示引擎
   project_manager.py      新建/载入/补全工程
   filters.py              去 AI 套话与结尾检测

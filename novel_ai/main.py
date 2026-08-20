@@ -1,4 +1,4 @@
-﻿"""命令行入口：新建、续写、查看、测试全部流程。"""
+"""命令行入口：新建、续写、查看、测试全部流程。"""
 from __future__ import annotations
 import argparse
 import json
@@ -43,6 +43,7 @@ def _config_from_args(args: argparse.Namespace) -> NovelConfig:
     cfg.direction = args.direction or ""
     cfg.taboos = args.taboos or ""
     cfg.preferences = args.preferences or ""
+    cfg.worldview = args.worldview or ""
     # 开关可通过 --off 参数关闭，默认全部开启
     cfg.anti_ending = not args.no_anti_ending
     cfg.memory_inherit = not args.no_memory_inherit
@@ -76,6 +77,7 @@ def _build_parser() -> argparse.ArgumentParser:
     p_new.add_argument("--direction")
     p_new.add_argument("--taboos")
     p_new.add_argument("--preferences")
+    p_new.add_argument("--worldview")
     p_new.add_argument("--no-anti-ending", action="store_true")
     p_new.add_argument("--no-memory-inherit", action="store_true")
     p_new.add_argument("--no-progression", action="store_true")
@@ -123,7 +125,8 @@ def _run_new(args: argparse.Namespace):
         cfg.conflict = cfg.conflict or _ask("  当前矛盾：")
         cfg.relations = cfg.relations or _ask("  人物关系：")
         cfg.direction = cfg.direction or _ask("  剧情走向：")
-        cfg.taboos = cfg.taboos or _ask("  禁忌内容：")
+        cfg.taboos = cfg.taboos or _ask("  禁忌内容：")
+        cfg.worldview = cfg.worldview or _ask("  世界观/一句话设定（可回车跳过）：")
         cfg.preferences = cfg.preferences or _ask("  爽点/虐点偏好：")
     created = create_project(cfg, PROJECTS_ROOT)
     store: ProjectStore = created["store"]
@@ -187,7 +190,7 @@ def main(argv: Optional[list] = None) -> int:
             command="new", title=title, mode=mode, chapters=chapters, tier=tier,
             genre="", style="", world="", rules="", power="", forces="",
             protagonist="", side_characters="", antagonist="", opening="",
-            conflict="", relations="", direction="", taboos="", preferences="",
+            conflict="", relations="", direction="", taboos="", preferences="", worldview="",
             no_anti_ending=False, no_memory_inherit=False, no_progression=False,
             no_de_ai=False, no_autosave=False,
         )

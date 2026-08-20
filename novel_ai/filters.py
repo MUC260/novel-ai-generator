@@ -1,4 +1,4 @@
-﻿"""深度去 AI 文风净化：套话词库、模板结构、结尾检测与替换。"""
+"""深度去 AI 文风净化：套话词库、模板结构、结尾检测与替换。"""
 from __future__ import annotations
 from dataclasses import dataclass
 from typing import Dict, List
@@ -6,11 +6,10 @@ from typing import Dict, List
 # 全网最细 AI 套话禁用词库
 AI_PHRASES = [
     "不由得", "一时间", "就这样", "此刻", "此时", "亦是", "便是",
-    "殊不知", "缓缓", "渐渐", "随即", "心中暗道", "脑海一闪",
-    "心头一凛", "万般思绪涌上心头", "不由感慨", "在此刻", "于此时",
-    "随之而来", "渐渐明白", "缓缓开口", "就在这时", "与此同时",
-    "不曾想", "谁也没想到", "偏偏在此时", "然后", "于是", "接着",
-    "不禁", "忍不住", "仿佛", "似乎", "像是", "宛如",
+    "脑海中", "脑海一闪", "脑海闪过", "心头一凛", "万般思绪涌上心头",
+    "不由感慨", "在此刻", "于此时", "随之而来", "渐渐明白", "缓缓开口",
+    "就在这时", "与此同时", "不曾想", "谁也没想到", "偏偏在此时",
+    "然后", "于是", "接着", "不禁", "忍不住", "仿佛", "似乎", "像是", "宛如",
 ]
 
 # 结尾收束语：绝对禁止
@@ -26,6 +25,7 @@ TRANSITION_PHRASES = [
     "突然之间", "刹那间", "瞬间", "电光火石之间",
 ]
 
+# 套话映射为自然口语：purify 只替换有映射的词，未映射的仅统计不删除
 REPLACEMENTS = {
     "不由得": "没压住",
     "一时间": "当场",
@@ -45,9 +45,22 @@ REPLACEMENTS = {
     "仿佛": "跟",
     "似乎": "像",
     "像是": "跟",
-    "然后": "",
-    "于是": "",
+    "然后": "随后",
     "接着": "随后",
+    "心中暗道": "暗想",
+    "脑海一闪": "忽然想到",
+    "脑海闪过": "忽然想到",
+    "心头一凛": "心头一紧",
+    "万般思绪涌上心头": "念头纷杂",
+    "不由感慨": "叹道",
+    "在此刻": "这时",
+    "于此时": "这时",
+    "随之而来": "紧跟着",
+    "渐渐明白": "才明白",
+    "缓缓开口": "开口",
+    "不禁": "不由",
+    "忍不住": "没忍住",
+    "宛如": "像",
 }
 
 
@@ -69,7 +82,9 @@ def purify(text: str, remove_ai: bool = True, forbid_ending: bool = True) -> Fil
         for phrase in sorted(AI_PHRASES, key=len, reverse=True):
             if phrase in cleaned:
                 found.append(phrase)
-                cleaned = cleaned.replace(phrase, REPLACEMENTS.get(phrase, ""))
+                replacement = REPLACEMENTS.get(phrase)
+                if replacement is not None:
+                    cleaned = cleaned.replace(phrase, replacement)
     ending_found = [p for p in ENDING_PHRASES if p in cleaned] if forbid_ending else []
     transition_hit = any(p in cleaned for p in TRANSITION_PHRASES)
     removed = len(found)
