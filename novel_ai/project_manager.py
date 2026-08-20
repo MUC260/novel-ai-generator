@@ -74,21 +74,21 @@ def _build_world(cfg: NovelConfig) -> Dict[str, Any]:
 
     if llm.available:
 
-        from .prompts import world_prompt, world_prompt_compact
+        from .prompts import world_prompt, world_prompt_fast
 
-        # 尝试最多 2 次：首次全量 prompt，若截断/解析失败则用精简 prompt 重试一次
+        # 尝试最多 2 次：首次快速精简 prompt，若失败则回退完整 prompt 重试一次
 
         for attempt in range(2):
 
             try:
 
-                prompt = world_prompt(cfg.title, custom) if attempt == 0 else world_prompt_compact(cfg.title, custom)
+                prompt = world_prompt_fast(cfg.title, custom) if attempt == 0 else world_prompt(cfg.title, custom)
 
                 raw = llm.chat(
 
                     [{"role": "user", "content": prompt}],
 
-                    max_tokens=8000,
+                    max_tokens=5500 if attempt == 0 else 8000,
 
                     temperature=0.8,
 
@@ -317,6 +317,12 @@ def _fix_protagonist_in_plot(world: Dict[str, Any], old_name: str, new_name: str
             if sub_key in fb:
 
                 fb[sub_key] = _replace_in_value(fb[sub_key])
+
+    for sub_key in ("短期伏笔", "中期伏笔", "长线伏笔"):
+
+        if sub_key in plot:
+
+            plot[sub_key] = _replace_in_value(plot[sub_key])
 
 
 

@@ -33,6 +33,37 @@ WORLD_AUTO_PROMPT = """你是顶级长篇网文架构师，根据用户提供的
 自定义补充：{{custom}}
 """
 
+WORLD_FAST_PROMPT = """你是顶级网文架构师，请快速生成一套紧凑但完整的小说底层设定。直接输出纯净JSON，不要任何解释、注释或多余文字。
+
+硬性限制：
+- 总输出控制在2200字以内，每个字段用1-2句话，禁止长篇展开、禁止堆砌形容词、禁止重复表达。
+- character_list 最多3人：第1个是主角、最后1个是核心反派、中间1个是核心配角。每人8个字段都要填，每项1句话。
+- force_map 最多4个势力。
+- plot_framework 每个数组最多3条。
+
+JSON 结构（必须严格包含以下字段）：
+{
+  "world_setting": {"世界类型":"", "时代背景":"", "社会结构":"", "底层规则":"", "世界禁忌":"", "生存现状":"", "整体基调":""},
+  "power_system": {"能力来源":"", "修炼流程":"", "等级体系":"", "进阶代价":"", "短板与副作用":"", "实力天花板":""},
+  "force_map": [{"名称":"", "立场":"", "核心利益":"", "主要冲突":""}],
+  "character_list": [{"姓名":"", "外貌":"", "性格":"", "缺陷":"", "秘密":"", "软肋":"", "目标":"", "当前处境":""}],
+  "plot_framework": {
+    "全书终极主线":"", "中期节点":[], "短期开局冲突":"",
+    "短期伏笔":[], "中期伏笔":[], "长线伏笔":[],
+    "当前未解决危机":[], "未来潜在大冲突":[]
+  }
+}
+
+硬性规则：
+1. 用户自定义补充（custom）拥有最高优先级，任何自动设定不得与之冲突。
+2. 若用户仅提供主角姓氏（单个汉字，如"司"），必须为该主角生成2-4字完整姓名（如"司无名"/"司空震"/"司南"），写入 character_list[0].姓名。
+3. 角色必须差异化，反派动机合理，不能完美人设。
+4. 力量体系必须有代价、有限制；世界要有矛盾隐患支撑后续连载。
+
+小说名称：{{title}}
+自定义补充：{{custom}}
+"""
+
 WRITE_BASE_PROMPT = """你是职业资深百万字网文连载作者，专门创作连贯、自然、无机械AI味、无模板感、无限连载的长篇小说正文。
 只输出纯小说正文，禁止输出任何解释、分析、小结、备注、本章完、章节提示、剧情总结。
 
@@ -106,6 +137,16 @@ def world_prompt(title: str, custom: dict | str) -> str:
     return WORLD_AUTO_PROMPT.replace("{{title}}", title).replace("{{custom}}", custom_text or "无")
 
 
+
+
+
+
+
+
+def world_prompt_fast(title: str, custom: dict | str) -> str:
+    """快速版世界生成提示词：字段完整但每条短小，显著缩短生成时间。"""
+    custom_text = custom if isinstance(custom, str) else "；".join(f"{k}={v}" for k, v in custom.items() if str(v).strip())
+    return WORLD_FAST_PROMPT.replace("{{title}}", title).replace("{{custom}}", custom_text or "无")
 
 
 def world_prompt_compact(title: str, custom: dict | str) -> str:
